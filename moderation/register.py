@@ -254,6 +254,17 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
 
         unchanged_obj = self._get_unchanged_object(instance)
         moderator = self.get_moderator(sender)
+
+        # check if all update_fields are excluded from moderation (fields_exclude),  bypass moderation if so
+        atleast_one_valid_field = False
+        if kwargs['update_fields']:
+            for field in kwargs['update_fields']:
+                if field not in moderator.fields_exclude:
+                    atleast_one_valid_field = True
+                    break
+            if not atleast_one_valid_field:
+                return
+
         if unchanged_obj:
             moderated_obj = self._get_or_create_moderated_object(instance,
                                                                  unchanged_obj,
@@ -356,6 +367,16 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
 
         pk = instance.pk
         moderator = self.get_moderator(sender)
+
+        # check if all update_fields are excluded from moderation (fields_exclude),  bypass moderation if so
+        atleast_one_valid_field = False
+        if kwargs['update_fields']:
+            for field in kwargs['update_fields']:
+                if field not in moderator.fields_exclude:
+                    atleast_one_valid_field = True
+                    break
+            if not atleast_one_valid_field:
+                return
 
         if kwargs['created']:
             old_object = sender._default_unmoderated_manager.get(pk=pk)

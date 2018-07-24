@@ -309,12 +309,13 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
                 instance)
             if moderated_object is None:
                 moderated_object = get_new_instance(unchanged_obj)
-            elif moderator.keep_history and \
-                    moderated_object.has_object_been_changed(
-                    instance):
-                # We're keeping history and this isn't an update of an existing
-                # moderation
-                moderated_object = get_new_instance(unchanged_obj)
+            elif moderator.keep_history:
+                if  moderated_object.has_object_been_changed(instance):
+                    # We're keeping history and this isn't an update of an existing
+                    # moderation
+                    moderated_object = get_new_instance(unchanged_obj)
+                else:
+                    moderated_object.changed_object = self._get_updated_object(instance, unchanged_obj, moderator)
 
         except ModeratedObject.DoesNotExist:
             moderated_object = get_new_instance(unchanged_obj)

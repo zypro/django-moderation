@@ -258,9 +258,8 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
             moderated_obj = self._get_or_create_moderated_object(instance,
                                                                  unchanged_obj,
                                                                  moderator)
-            if not (moderated_obj.status ==
-                    MODERATION_STATUS_APPROVED or
-                    moderator.bypass_moderation_after_approval):
+            if not moderator.bypass_moderation_after_approval or not (
+                moderated_obj.status == MODERATION_STATUS_APPROVED or moderator.bypass_moderation_after_approval):
                 moderated_obj.save()
 
     def _get_unchanged_object(self, instance):
@@ -320,6 +319,7 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
             moderated_object = get_new_instance(unchanged_obj)
 
         else:
+            moderated_object.changed_object = unchanged_obj
             if moderated_object.has_object_been_changed(instance):
                 if moderator.visible_until_rejected:
                     moderated_object.changed_object = instance

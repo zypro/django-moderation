@@ -231,6 +231,18 @@ class ApprovedRecordsRegressionTestCase(TestCase):
         self.assertEqual('unmoderated_value_1', obj.moderated_object.changed_object.unmoderated)
         self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
 
+        obj.unmoderated = "unmoderated_value_2"
+        obj.save(update_fields=['unmoderated'])
+        obj = ModelWithModeratedFields.objects.all().first()
+        self.assertEqual('moderated_value', obj.moderated)
+        self.assertEqual('moderated_value_1', obj.moderated_object.changed_object.moderated)
+
+        self.assertEqual('unmoderated_value_2', obj.unmoderated)
+        self.assertEqual('unmoderated_value_2', obj.moderated_object.changed_object.unmoderated)
+        self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
+
+
+
     def test_without_any_change(self):
         obj = self.get_approved_record()
         obj.save()
@@ -360,6 +372,16 @@ class PendingRecordsRegressionTestCase(TestCase):
 
         self.assertEqual('unmoderated_value_1', obj.unmoderated)
         self.assertEqual('unmoderated_value_1', obj.moderated_object.changed_object.unmoderated)
+        self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
+
+        obj.unmoderated = "unmoderated_value_2"
+        obj.save(update_fields=['unmoderated'])
+        obj = ModelWithModeratedFields.objects.all().first()
+        self.assertEqual('moderated_value', obj.moderated)
+        self.assertEqual('moderated_value_1', obj.moderated_object.changed_object.moderated)
+
+        self.assertEqual('unmoderated_value_2', obj.unmoderated)
+        self.assertEqual('unmoderated_value_2', obj.moderated_object.changed_object.unmoderated)
         self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
 
     def test_without_any_change(self):
@@ -492,6 +514,16 @@ class RejectedRecordsRegressionTestCase(TestCase):
 
         self.assertEqual('unmoderated_value_1', obj.unmoderated)
         self.assertEqual('unmoderated_value_1', obj.moderated_object.changed_object.unmoderated)
+        self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
+
+        obj.unmoderated = "unmoderated_value_2"
+        obj.save(update_fields=['unmoderated'])
+        obj = ModelWithModeratedFields.objects.all().first()
+        self.assertEqual('moderated_value', obj.moderated)
+        self.assertEqual('moderated_value_1', obj.moderated_object.changed_object.moderated)
+
+        self.assertEqual('unmoderated_value_2', obj.unmoderated)
+        self.assertEqual('unmoderated_value_2', obj.moderated_object.changed_object.unmoderated)
         self.assertEqual(MODERATION_STATUS_PENDING, obj.moderated_object.status)
 
     def test_without_any_change(self):

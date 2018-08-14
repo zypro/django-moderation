@@ -257,7 +257,7 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
         if unchanged_obj:
             moderated_obj = self._get_or_create_moderated_object(instance,
                                                                  unchanged_obj,
-                                                                 moderator)
+                                                                 moderator, update_fields=kwargs.get('update_fields'))
             if not moderator.bypass_moderation_after_approval or not (
                 moderated_obj.status == MODERATION_STATUS_APPROVED or moderator.bypass_moderation_after_approval):
                 moderated_obj.save()
@@ -272,7 +272,7 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
         except instance.__class__.DoesNotExist:
             return None
 
-    def _get_updated_object(self, instance, unchanged_obj, moderator):
+    def _get_updated_object(self, instance, unchanged_obj, changed_object, moderator, update_fields):
         """
         Returns the unchanged object with the excluded fields updated to
         those from the instance.
@@ -282,11 +282,13 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
             if field.name in excludes:
                 value = getattr(instance, field.name)
                 setattr(unchanged_obj, field.name, value)
-
+            elif update_fields and field.name not in update_fields:
+                value = getattr(changed_object, field.name)
+                setattr(unchanged_obj, field.name, value)
         return unchanged_obj
 
     def _get_or_create_moderated_object(self, instance,
-                                        unchanged_obj, moderator):
+                                        unchanged_obj, moderator, update_fields=None):
         """
         Get or create ModeratedObject instance.
         If moderated object is not equal instance then serialize unchanged
@@ -310,7 +312,7 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
                 moderated_object = get_new_instance(unchanged_obj)
             elif moderator.keep_history and \
                     moderated_object.has_object_been_changed(
-                    instance):
+                    instance, update_fields=update_fields):
                 # We're keeping history and this isn't an update of an existing
                 # moderation
                 moderated_object = get_new_instance(unchanged_obj)
@@ -319,17 +321,18 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
             moderated_object = get_new_instance(unchanged_obj)
 
         else:
+            current_changed_object = moderated_object.changed_object
             moderated_object.changed_object = unchanged_obj
-            if moderated_object.has_object_been_changed(instance):
+            if moderated_object.has_object_been_changed(instance, update_fields=update_fields):
                 if moderator.visible_until_rejected:
                     moderated_object.changed_object = instance
                 else:
                     moderated_object.changed_object = self._get_updated_object(
-                        instance, unchanged_obj, moderator)
+                        instance, unchanged_obj, current_changed_object, moderator, update_fields=update_fields)
             elif moderated_object.has_object_been_changed(instance,
-                                                          only_excluded=True):
+                                                          only_excluded=True, update_fields=update_fields):
                 moderated_object.changed_object = self._get_updated_object(
-                    instance, unchanged_obj, moderator)
+                    instance, unchanged_obj, current_changed_object, moderator, update_fields=update_fields)
 
         return moderated_object
 
@@ -375,7 +378,7 @@ class ModerationManager(with_metaclass(ModerationManagerSingleton, object)):
             moderated_obj.save()
             return
 
-        if moderated_obj.has_object_been_changed(instance):
+        if moderated_obj.has_object_been_changed(instance, update_fields=kwargs.get('update_fields')):
             copied_instance = self._copy_model_instance(instance)
 
             if not moderator.visible_until_rejected:

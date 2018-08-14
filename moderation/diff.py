@@ -80,11 +80,8 @@ def get_changes_between_models(model1, model2, excludes=None, includes=None,
     if excludes is None:
         excludes = []
 
-    if includes is None:
-        includes = []
-
     for field in model1._meta.fields:
-        if includes and field.name not in includes:
+        if includes is not None and field.name not in includes:
             continue
 
         if not (isinstance(field, (fields.AutoField,))):

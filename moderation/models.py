@@ -227,12 +227,18 @@ class ModeratedObject(models.Model):
         if self.changed_by:
             self.moderator.inform_user(self.content_object, self.changed_by)
 
-    def has_object_been_changed(self, original_obj, only_excluded=False):
-        excludes = includes = []
+    def has_object_been_changed(self, original_obj, only_excluded=False, update_fields=None):
+        excludes = includes = None
         if only_excluded:
-            includes = self.moderator.fields_exclude
+            if update_fields:
+                includes = list(update_fields & set(self.moderator.fields_exclude))
+            else:
+                includes = self.moderator.fields_exclude
         else:
-            excludes = self.moderator.fields_exclude
+            if update_fields:
+                includes = list(update_fields - set(self.moderator.fields_exclude))
+            else:
+                excludes = self.moderator.fields_exclude
 
         changes = get_changes_between_models(original_obj,
                                              self.changed_object,

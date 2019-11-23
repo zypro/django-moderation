@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,14 +6,11 @@ from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 
 from .managers import ModerationObjectsManager
-from .message_backends import (BaseMessageBackend,
-                               EmailMessageBackend,
-                               BaseMultipleMessageBackend,
+from .message_backends import (BaseMessageBackend, BaseMultipleMessageBackend, EmailMessageBackend,
                                EmailMultipleMessageBackend)
 
 
-class GenericModerator(object):
-
+class GenericModerator:
     """
     Encapsulates moderation options for a given model.
     """
@@ -178,9 +174,7 @@ class GenericModerator(object):
         multiple_backend = self.get_multiple_message_backend()
         multiple_backend.send(datatuples)
 
-    def inform_moderator(self,
-                         content_object,
-                         extra_context=None):
+    def inform_moderator(self, content_object, extra_context=None):
         '''Send notification to moderator'''
         from .conf.settings import MODERATORS
 
@@ -189,7 +183,8 @@ class GenericModerator(object):
                 content_object=content_object,
                 subject_template=self.subject_template_moderator,
                 message_template=self.message_template_moderator,
-                recipient_list=MODERATORS)
+                recipient_list=MODERATORS,
+                extra_context=extra_context)
 
     def inform_user(self, content_object,
                     user,
@@ -250,7 +245,7 @@ class GenericModerator(object):
                     self.visibility_column)[0])
 
             if field_type != BooleanField:
-                msg = "visibility_column field: %s on model %s should "\
+                msg = "visibility_column field: %s on model %s should " \
                       "be BooleanField type but is %s"
                 msg %= (
                     self.moderator.visibility_column,

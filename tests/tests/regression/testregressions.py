@@ -110,6 +110,35 @@ class BypassOverwritesUpdatedObjectRegressionTestCase(TestCase):
         obj = ModelWithVisibilityField.objects.get()
         self.assertEqual('modified', obj.test)
 
+    def test_can_update_objects_with_bypass_enabled(self):
+        obj = ModelWithVisibilityField.objects.create(test='initial')
+        obj.save()
+
+        # It's never been approved before, so it's now invisible
+        self.assertEqual(
+            [], list(ModelWithVisibilityField.objects.all()),
+            "The ModelWithVisibilityField has never been approved and is now "
+            "pending, so it should be hidden")
+        # So approve it
+        obj.moderated_object.approve(by=self.user, reason='test')
+        # Now it should be visible, with the new description
+        obj = ModelWithVisibilityField.objects.get()
+        self.assertEqual('initial', obj.test)
+
+        # Now change it again. Because bypass_moderation_after_approval is
+        # True, it should still be visible and we shouldn't need to approve it
+        # again.
+        obj.test = 'modified'
+        obj.save()
+        obj = ModelWithVisibilityField.objects.get()
+        self.assertEqual('modified', obj.test)
+
+        # Admin does this after saving an object. Check that it doesn't undo
+        # our changes.
+        automoderate(obj, self.user)
+        obj = ModelWithVisibilityField.objects.get()
+        self.assertEqual('modified', obj.test)
+
 
 class ApprovedRecordsRegressionTestCase(TestCase):
     fixtures = ['test_users.json']
